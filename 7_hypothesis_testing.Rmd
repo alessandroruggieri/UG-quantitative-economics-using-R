@@ -1,0 +1,143 @@
+---
+title: "Chapter 7 - Hypothesis Testing"
+author: "Dr. Alessandro Ruggieri"
+affiliation: University of Nottingham
+output:
+  html_document:
+    toc: yes
+    toc_depth: '3'
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+
+We take data on the average number of hours worked in a week across countries.
+
+```{r}
+# import new data:hours worked rate across countries
+data_hours <- read.csv("HOW_TEMP_SEX_ECO_GEO_NB_A-filtered-2021-01-12.csv",  header = TRUE)
+# rename columns
+names(data_hours) <- c("country", "label", "source","gender","occupations","area", "year", "weeklyhours", "status", "note1", "note2")
+# subset matrix according to gender groups: Sex=all gender
+data_hours<-data_hours[data_hours$gender == "Sex: Total",]
+data_hours$gender <- NULL
+# subset matrix according to occupations groups: occupations=Aggregate
+data_hours<-data_hours[data_hours$occupations == "Economic activity (Aggregate): Total", ]
+data_hours$occupations <- NULL
+# subset matrix according to area groups: area=Aggregate
+data_hours<-data_hours[data_hours$area == "Area type: National", ]
+data_hours$area <- NULL
+## Select 2018 data
+data_hours_2018<-data_hours[data_hours$year == "2018",]
+## Final data
+x <- data_hours_2018$weeklyhours
+```
+
+### One-Sample Two-sided T-testing
+
+We can test whether the mean of the samples is equal to a specified value against the two-side alternative using the function t.test( )
+
+Suppose we want to test the hypothesis that the average number of hours worked is equal to 35 ($H_0: \mu=35$) against the alternative that the the average number of hours is different than 35 ($H_0: \mu \neq 35$). This T-test can be implemented as follows:
+```{r}
+# Test whether the average weekly number of hours worked is 35 against a two-sided alternative
+t.test(x, mu = 35)
+```
+
+### One-Sample One-sided T-testing
+
+We can test if the sample mean is lower or greater than a specific value by switching to a one-sided test. This is possibility by including the option alternative= ″two.sided″, ″less″, or ″greater″. Suppose in fact that we want to test the hypothesis that the average number of hours worked is equal to 35 ($H_0: \mu=35$) against the alternative that the the average number of hours is greater than 35 ($H_0: \mu > 35$). Then we can write:
+
+```{r}
+# Test whether the average weekly number of hours worked is 35 against a one-sided alternative
+t.test(x, mu = 35, alternative = 'greater')
+```
+
+Suppose now that we want to test the hypothesis that the average number of hours worked is equal to 35 ($H_0: \mu=35$) against the alternative that the the average number of hours is lower than 35 ($H_0: \mu < 35$). Then we can write:
+
+```{r}
+# Test whether the average weekly number of hours worked is 35 against a one-sided alternative
+t.test(x, mu = 35, alternative = 'less')
+```
+
+Remember that - when performing this test - we assumed that the sample data is extracted from a normally distributed random variable. We can check whether this assumption is satisfied by looking at the data histogram:
+
+```{r}
+# histogram of data
+hist(x, xlab="# hours", main="Empirical distribution of average weekly hours worked in 2019")
+```
+
+We can also use the QQ plot:
+
+```{r}
+# Sample quantile-to-quantile plot
+qqnorm(x, pch = 1, frame = FALSE)
+qqline(x, col = "steelblue", lwd = 2)
+```
+
+
+### Two-Sample T-testing
+
+Suppose now we want to compare the average weekly hours worked in UK against Portugal
+
+We first extract the data as follows:
+```{r}
+## Select and extract UK and Portugal data
+data_hours_uk<-data_hours[data_hours$country == "United Kingdom",]
+x <- data_hours_uk$weeklyhours 
+data_hours_pt<-data_hours[data_hours$country == "Portugal",]
+y <- data_hours_pt$weeklyhours 
+```
+
+Check if data have the same length
+```{r}
+## Check if data have same length
+length(x)==length(y)
+n<-length(x)
+```
+
+We then combine the data for UK and PT into a data frame
+```{r}
+# Create a data frame
+z <- data.frame( 
+                group = rep(c("UK", "PT"), each = n),
+                weeklyhours = c(x,  y)
+                )
+```                
+
+Then we can compute summary statistics by groups
+
+```{r}
+## Summarize statistics for hours worked separately by groups (UK and PT)
+library(dplyr)
+group_by(z, group) %>%
+  summarise(
+    count = n(),
+    mean = mean(weeklyhours, na.rm = TRUE),
+    sd = sd(weeklyhours, na.rm = TRUE),
+    min = min(weeklyhours),
+    max = max(weeklyhours)
+  )
+```
+
+        
+We can test whether the average number of weekly hours worked in UK is the same as in Portugal ($H_0: \mu_{UK} = \mu_{PT}$) against the alternative hypothesis that they are different ($H_0: \mu_{UK} \neq \mu_{PT}$) using the function t.test( ) and specifying the samples we are comparing:
+
+```{r}
+t.test(x, y, alternative = "two.sided", var.equal = FALSE)
+```
+
+We can also test whether the average number of weekly hours worked in UK is the same as in Portugal ($H_0: \mu_{UK} = \mu_{PT}$) against the alternative hypothesis that hours worked are on average higher in UK ($H_0: \mu_{UK} > \mu_{PT}$) using the function t.test( ) and specifying the samples we are comparing:
+
+```{r}
+t.test(x, y, alternative = "greater", var.equal = FALSE)
+```
+
+Remember that we imposed three major assumptions when performing this test:
+
+- the two samples (UK and PT) are independent
+
+- data in both samples follow a normal distribution
+
+- data in both sample are drawn from a random variable with same variance
+

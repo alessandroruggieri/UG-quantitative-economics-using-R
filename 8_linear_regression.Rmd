@@ -1,0 +1,143 @@
+---
+title: "Chapter 8 - Linear regression"
+author: "Dr. Alessandro Ruggieri"
+affiliation: University of Nottingham
+output:
+  html_document:
+    toc: yes
+    toc_depth: '3'
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+
+### Univariate linear regression
+Let's analyze the relation between log of GDP per capita and hours worked across countries.
+
+- We first upload data on GDP per capita across countries:
+```{r}
+# import data on GDP per capita across countries
+data_gdp <- read.csv("GDP_205U_NOC_NB_A-filtered-2020-12-22.csv",  header = TRUE)
+# rename columns
+names(data_gdp) <- c("country", "label", "source", "year", "gdp")
+```
+
+- Then we upload data on weekly hours worked across countries:
+```{r}
+# import new data:hours worked rate across countries
+data_hours <- read.csv("HOW_TEMP_SEX_ECO_GEO_NB_A-filtered-2021-01-12.csv",  header = TRUE)
+# rename columns
+names(data_hours) <- c("country", "label", "source","gender","occupations","area", "year", "weeklyhours", "status", "note1", "note2")
+# subset matrix according to gender groups: Sex=all gender
+data_hours<-data_hours[data_hours$gender == "Sex: Total",]
+# subset matrix according to occupations groups: occupations=Aggregate
+data_hours<-data_hours[data_hours$occupations == "Economic activity (Aggregate): Total", ]
+# subset matrix according to area groups: area=Aggregate
+data_hours<-data_hours[data_hours$area == "Area type: National", ]
+```
+
+Finally we merge the two datasets:
+```{r}
+# merge two data frames by country name and year
+data_univariate <- merge(data_gdp,data_hours,by=c("country","year"))
+```
+
+We first compute the correlation coefficient between log real GDP per capita and hours worked:
+```{r}
+# Correlation coefficient
+cor(log(data_univariate$gdp),data_univariate$weeklyhours)
+```
+
+
+The simple linear regression tries to find the best line to predict poverty rate on the basis of log GDP per capita. In this case, the univariate linear model equation can be written as follow: 
+
+hours-worked$_{it}$ = $\beta_0$ + $\beta_1$ log realGDPxcapita$_{it}$  + $\epsilon_{it}$
+
+We can estimate $\beta_0$ and $\beta_1$ using the R function function lm( )
+
+```{r}
+# Univariate linear regression
+bols <- lm(weeklyhours ~ log(gdp), data = data_univariate)
+# display estimates
+bols
+```
+
+
+We can display the statistical summary of the model using the R function summary( ):
+
+```{r}
+# display model summary
+model<-summary(bols)
+model
+```
+ 
+To test the significance of the estimate for $\beta_1$, we can construct the appropriate t-statistics:
+
+```{r}
+# Recover estimate coefficient
+bols_1 <-model$coefficients["log(gdp)", "Estimate"]
+# Recover estimate standard error
+se_1 <-model$coefficients["log(gdp)", "Std. Error"]
+# Construct t-stats
+t_1 <- bols_1/se_1
+print(t_1)
+```
+
+
+### Multivariate linear regression
+
+It is often the case that one explanatory variable is insufficient to explain the variation in the dependent variable. The multiple linear regression model allows for more than one explanatory variable. 
+
+Suppose we think that the poverty rate might affect aggregate labor supply. First we upload data on poverty rate across countries:  
+
+```{r}
+# import new data:poverty rate across countries
+data_pov <- read.csv("SDG_0111_SEX_AGE_RT_A-filtered-2021-01-09.csv",  header = TRUE)
+# rename columns
+names(data_pov) <- c("country", "label", "source","gender","age", "year", "povertyrate")
+# subset matrix according to gender groups: Sex=all gender
+data_pov<-data_pov[data_pov$gender == "Sex: Total",]
+# subset matrix according to age groups: age=15+
+data_pov<-data_pov[data_pov$age == "Age (Youth, adults): 15+", ]
+```
+
+Finally we merge the new data with previous dataset:
+```{r}
+# merge with previous data frame by country name and year
+data_multivariate <- merge(data_univariate,data_pov,by=c("country","year"))
+```
+
+We can specify our multivariate linear model as follow: 
+
+hours-worked$_{it}$ = $\beta_0$ + $\beta_1$ log realGDPxcapita$_{it}$ + $\beta_2$ povertyrate$_{it}$  + $\epsilon_{it}$
+
+We can estimate $\beta_0$, $\beta_1$ and $\beta_2$ using the R function function lm( )
+
+```{r}
+# Multivariate linear regression
+bols_multi <- lm(weeklyhours ~ log(gdp) + povertyrate, data = data_multivariate)
+# display estimates
+bols_multi
+```
+
+We can again display the statistical summary of the model using the R function summary( ):
+
+```{r}
+# display model summary
+model_multi<-summary(bols_multi)
+model_multi
+```
+
+
+Finally, we can test the significance of the estimate for $\beta_2$, by constructing the appropriate t-statistics:
+
+```{r}
+# Recover estimate coefficient
+bols_multi_3 <-model_multi$coefficients["povertyrate", "Estimate"]
+# Recover estimate standard error
+se_multi_3 <-model_multi$coefficients["povertyrate", "Std. Error"]
+# Construct t-stats
+t_multi_3 <- bols_multi_3/se_multi_3
+print(t_multi_3)
+```

@@ -1,0 +1,123 @@
+---
+title: "Chapter 3 - Discrete Probability Distribution"
+author: "Dr. Alessandro Ruggieri"
+affiliation: University of Nottingham
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+    fig_width: 4
+    fig_height: 3
+    fig_caption: true
+  html_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+
+### Binomal distribution
+A random variable distributed as a Binomial(n,p) has a density equal to $p(x) = C(n, x) p^x (1-p)^{(n-x)}$ for $x>0$. The mean is equal to E(x)=$np$ while the variance is Var(x)=$np (1 − p)$
+
+We can compute the density p(x) using the function dbinom( )
+
+```{r}
+# trials
+n<-10
+# probability
+p<-0.3
+# number of success
+x<-3
+# density at x (probability of x successes out of n trial)
+dbinom(x,n, p)
+```
+
+We can also compute the distribution function P(x) using the function pbinom( )
+
+```{r}
+# distribution function at x  (probability of up to x successes out of n trial)
+pbinom(x, n, p)
+```
+
+Alternatively, we can also compute the distribution function by summing the densities accordingly, i.e.
+
+```{r}
+# distribution function at x = 3
+out<-0
+i<-0
+while(i<= 3) {
+  dist<-dbinom(i,n, p)
+  out = dist +out
+  i<-i+1
+}
+out
+```
+
+We can use the function pbinom( ) to compute the probability that number of successes lie between two values, a and b.
+
+```{r}
+# lower bound - minimum number of successes
+a<-2
+# upper bound - maximum number of successes
+b<-5
+# probability number of successes is between and and bout of n trial
+sum(dbinom(a:b, n, p))
+```
+
+or alternative, we can use the function pbinom( ) and subtract the distribution evaluated at a-1 to the distribution evaluated at b, i.e
+```{r}
+# probability number of successes is between a and b out of n trial
+pbinom(b, n, p) - pbinom(a-1, n, p) 
+```
+
+
+Notice that the Bernulli distribution can be understood as a Binomial for the case of n=1 trial.
+
+If we want to draw a k numbers from a Binomial distribution B(n,p), we can use the function rbinom( ):
+```{r}
+# numbers to draw
+k<-10000
+# draw k numbers
+y<-rbinom(k, n, p)  
+```
+
+and the we can display the density using a histogram:
+```{r}
+# histogram
+hist(y, main="Probability density of Binomial r.v.")
+```
+
+
+### Poisson distribution
+A random variable distributed as a Poisson($\lambda$) has density equal to $p(x) = \lambda^x \frac{\exp(-\lambda)}{x!}$ for $x\geq 0$. 
+
+The mean and variance are E(x) = Var(x) = $\lambda$. We can compute the density p(x) using the function dpois( )
+
+```{r}
+# rate of success
+lambda<-3
+# number of success
+x<-3
+# density at x (probability of x successes in interval of time with rate of success lambda)
+dpois(x,lambda)
+```
+
+We can also compute the distribution function P(x) using the function ppois( )
+
+```{r}
+# distribution function at x  (probability of up to x successess in interval of time with rate of success lambda)
+ppois(x,lambda)
+```
+
+If we want to draw a k numbers from a Binomial distribution B(n,p), we can use the function rbinom( )
+```{r}
+# numbers to draw
+k<-10000
+# draw k numbers
+z<-rpois(k, lambda)  
+```
+
+and the we can display the density using a histogram:
+```{r}
+# histogram
+hist(z, main="Probability density of Poisson r.v.")
+```

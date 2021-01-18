@@ -1,0 +1,218 @@
+---
+title: "Chapter 2 - Descriptive statistics"
+author: "Dr. Alessandro Ruggieri"
+affiliation: University of Nottingham
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+    fig_width: 4
+    fig_height: 3
+    fig_caption: true
+  html_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+
+### Intro
+
+We study how labor market participation for women and men vary across countries. 
+
+We first load the data:
+```{r}
+# import new data:hours worked rate across countries
+data_lfp <- read.csv("EAP_2WAP_SEX_AGE_GEO_RT_A-filtered-2021-01-13.csv",  header = TRUE)
+# rename columns
+names(data_lfp) <- c("country", "label", "source","gender","age","area", "year", "participation", "status")
+```
+
+We subset data for individuals of "Age=25+" and "Area=National":
+```{r}
+# subset matrix according to age groups: occupations=Aggregate
+data_lfp<-data_lfp[data_lfp$age == "Age (Youth, adults): 25+", ]
+# subset matrix according to area groups: area=Aggregate
+data_lfp<-data_lfp[data_lfp$area == "Area type: National", ]
+# subset matrix according to time: year=201
+data_lfp<-data_lfp[data_lfp$year == "2019", ]
+```
+
+We remove useless columns:
+```{r}
+# remove label
+data_lfp$label <- NULL
+# remove source
+data_lfp$source <- NULL
+# remove info on status
+data_lfp$status <- NULL
+```
+
+We select and extract data for men and women:
+```{r}
+# subset matrix for men
+data_lfp_men<-data_lfp[data_lfp$gender == "Sex: Male",]
+# subset matrix for women
+data_lfp_women<-data_lfp[data_lfp$gender == "Sex: Female",]
+```
+
+Finally, we merge back the cleaned data:
+```{r}
+# merge two data frames by country name and year
+data_lfp_final <- merge(data_lfp_men,data_lfp_women,by=c("country","year"))
+```
+
+First, we can inspect the data using the functions head() and tails(), which will display the first and the last part of the data, respectively
+```{r}
+#  
+head(data_lfp_women, 4)
+```
+```{r}
+#  
+tail(data_lfp_women, 4)
+```
+
+### Measures of centrality
+
+To look at centrality, we can construct the following measures:
+
+- the sample mean:
+```{r}
+# Compute the mean 
+avg_lfp_men<-mean(data_lfp_men$participation)
+avg_lfp_women<-mean(data_lfp_women$participation)
+# Print result
+sprintf("Average participation of women: %f", avg_lfp_women)
+```
+
+- the sample median:
+```{r}
+# Compute the median
+med_lfp_men<-median(data_lfp_men$participation)
+med_lfp_women<-median(data_lfp_women$participation)
+# Print result
+sprintf("Median participation of women: %f", med_lfp_women)
+```
+
+- the sample mode:
+```{r}
+# Compute the mode
+#install.packages("modeest")
+require(modeest)
+mode_lfp_men<-mfv(data_lfp_men$participation)
+mode_lfp_women<-mfv(data_lfp_women$participation)
+# Print result
+sprintf("Women participation mode: %f", mode_lfp_women)
+```
+
+### Measures of dispersion
+
+To look at dispersions, we can construct the following measures: 
+
+- the sample standard deviation: 
+```{r}
+# Compute the st.dev.
+sd_lfp_men<-sd(data_lfp_men$participation)
+sd_lfp_women<-sd(data_lfp_women$participation)
+# Print result
+sprintf("Dispersion in participation of women: %f", sd_lfp_women)
+```
+
+- the coefficient of variation:
+```{r}
+# Compute the coefficient of variation
+cv_lfp_men<-sd_lfp_men/avg_lfp_men
+cv_lfp_women<-sd_lfp_women/avg_lfp_women
+# Print result
+sprintf("Coefficient of variation for participation of women: %f", cv_lfp_women)
+```
+
+- the range:
+```{r}
+# Compute the range
+ramge_lfp_men<-range(data_lfp_men$participation)
+range_lfp_women<-range(data_lfp_women$participation)
+# Print result
+sprintf("Lower bound participation of women: %f", range_lfp_women[1])
+sprintf("Upper bound participation of women: %f", range_lfp_women[2])
+```
+
+- the interquartile range:
+```{r}
+# Compute the iqr range
+iqr_lfp_men<-IQR(data_lfp_men$participation)
+iqr_lfp_women<-IQR(data_lfp_women$participation)
+# Print result
+sprintf("Interquartile range in participation of women: %f", iqr_lfp_women)
+```
+
+
+Notice that we can compute an overall summary of the variable using the function summary( )
+```{r}
+# summarize participation for men
+summary(data_lfp_men$participation)
+```
+and for women
+```{r}
+# summarize participation for women
+summary(data_lfp_women$participation)
+```
+
+It is also possible to use the function stat.desc( ) to compute descriptive statisticse:
+
+```{r}
+# summarize participation 
+#install.packages("pastecs")
+library(pastecs)
+res <- stat.desc(data_lfp_men$participation)
+round(res, 2)
+```
+
+
+
+### Frequency
+To look at the entire distribution of participation rates for men and women, we can also plot their histograms:
+```{r}
+# Create histogram of participation rate across countries
+par(mfrow=c(1,1))
+hist(data_lfp_men$participation, xlab="%", ylab="density", 
+     main="labor market participation of men",xlim=c(0,100))
+# Create histogram of participation rate across countries
+hist(data_lfp_women$participation, xlab="%", ylab="density", 
+     main="labor market participation of women",xlim=c(0,100))
+```
+
+### Measure of correlations
+
+To look at how participation of men and women correlate across countries, we can construct their correlation coefficient. The correlation coefficient measures the association between two variables. Its value is bounded between -1 (perfect negative correlation: when x increases, y decreases) and +1 (perfect positive correlation: when x increases, y increases). A value closer to 0 suggests a weak relationship between the variables. 
+
+```{r}
+# Correlation coefficient
+cor(data_lfp_men$participation,data_lfp_women$participation)
+```
+
+
+Moreover, we can relate these two variables with a scatterplot:
+```{r}
+## load the package ggplot2
+library(ggplot2)
+# Create scatter of men and women participation
+ggplot(data_lfp_final, aes(x = participation.x, y = participation.y)) +
+  geom_point() +
+  ggtitle("labor force participation") + 
+  geom_abline(intercept=0, slope = 1, linetype="dashed", color = "red", size=2) +
+  xlab("participation men, %") + # for the x axis label
+  ylab("participation women, %") # for the y axis label
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
